@@ -1,0 +1,22 @@
+# Secrets — never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+.venv/
+
+# Tool caches
+.ruff_cache/
+
+# Runtime data
+query_history.json
+
+# Claude Code local settings
+.claude/
+
+# macOS
+.DS_Store
