@@ -1,89 +1,90 @@
-# LLMs in Healthcare Scheduling — TTSH HINT
+# Nurse Scheduling Demo
 
-Talk materials for the TTSH HINT session on the strategic integration of Large Language Models (LLMs) and Operations Research (OR) for optimized clinical scheduling.
+A Streamlit application demonstrating a **neuro-symbolic hybrid** approach to healthcare scheduling: Claude (LLM) translates natural language problem descriptions into Google OR-Tools CP-SAT code, and the solver guarantees a mathematically optimal, constraint-satisfying roster.
 
-**Audience:** Clinicians, nurse managers, and hospital administrators (non-technical)
-**Format:** 40-minute presentation
-
----
-
-## Overview
-
-Healthcare scheduling — from nurse rostering to OR management — is an NP-hard combinatorial optimization problem. Traditional manual and spreadsheet-based approaches cannot scale with modern clinical complexity. This talk explores how LLMs and Operations Research can work together to reduce administrative burden, improve fairness, and restore clinical staff's focus on patient care.
-
-The central argument: LLMs alone are insufficient for reliable scheduling (see [LIMITATIONS.md](LIMITATIONS.md)), but a **neuro-symbolic hybrid** — LLM as natural language interface + deterministic solver for optimization — offers a practical and deployable path forward.
+The central argument: LLMs alone achieve only ~65% feasibility on scheduling benchmarks. Pairing an LLM as a natural language interface with a deterministic solver gives 100% feasibility — every time.
 
 ---
 
-## Contents
+## Features
+
+- **Step 1 — Describe the problem** — type the scheduling rules in plain English, or upload a `.txt` file
+- **Step 2 — Generate code** — Claude translates the description into OR-Tools CP-SAT Python code
+- **Step 3 — Solve** — the solver finds the optimal, constraint-satisfying schedule; constraints are verified against the output table
+- **Step 4 — Reschedule** — when a nurse becomes unavailable (e.g. sick leave), re-solve with provably minimal disruption to the rest of the roster
+
+---
+
+## Setup
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```bash
+git clone https://github.com/ssakhavi/nurse-scheduling-app.git
+cd nurse-scheduling-app
+uv sync
+```
+
+Create a `.env` file with your Anthropic API key:
+
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+If no key is provided the app falls back to a pre-verified OR-Tools example.
+
+---
+
+## Running
+
+```bash
+uv run streamlit run app.py
+```
+
+---
+
+## Development
+
+```bash
+uv sync --extra dev       # installs ruff
+
+uv run ruff check app.py  # lint
+uv run ruff format app.py # format
+```
+
+Ruff must pass after every code modification. See `CLAUDE.md` for architecture details.
+
+---
+
+## Repository Layout
 
 | File | Description |
 |------|-------------|
-| `presentation.html` | Self-contained HTML slide deck (open in any browser) |
-| `presentation.key` | Keynote source file |
-| `ttsh-hint-llm4scheduling.pdf` | Exported PDF of the slides |
-| `LLM-SCHEDULING-HEALTHCARE.md` | Full research writeup: OR foundations, LLM capabilities, case studies, and a 40-minute presentation blueprint |
-| `LIMITATIONS.md` | Deep-dive into current LLM limitations in scheduling and rostering (feasibility rates, tokenization barriers, scalability, etc.) |
+| `app.py` | Streamlit application (all app logic) |
+| `main.py` | Minimal entry point |
+| `pyproject.toml` | Dependencies and Ruff configuration (managed by uv) |
+| `uv.lock` | Locked dependency versions |
+| `CHANGELOG.md` | Version history |
+| `CLAUDE.md` | Architecture notes and development guidelines |
+| `LLM-SCHEDULING-HEALTHCARE.md` | Background research: OR foundations, LLM capabilities, case studies |
+| `LIMITATIONS.md` | Analysis of LLM limitations in scheduling tasks |
 
 ---
 
-## Talk Structure (40 minutes)
+## How the Rescheduler Works
 
-| Section | Time | Topic |
-|---------|------|-------|
-| 1 | 0–5 min | **The Hook** — The 3 AM sick call: the human cost of chaotic staffing |
-| 2 | 5–15 min | **Operations Research** — Variables, constraints, and objectives explained without equations |
-| 3 | 15–25 min | **LLMs as Translators** — ReAct, Chain-of-Thought, and neuro-symbolic architectures |
-| 4 | 25–35 min | **Practical Tools** — Off-the-shelf and open-source options (Heidi AI, USolver, Taskade, Meditron) |
-| 5 | 35–40 min | **Governance & Next Steps** — HIPAA compliance, bias management, and a mini-pilot roadmap |
+After an initial schedule is produced, Step 4 builds a fresh CP-SAT model that:
 
----
+1. Reads per-day coverage requirements directly from the solved schedule
+2. Forces the unavailable nurse to Off on their specified days
+3. Introduces a deviation variable for every other cell
+4. Minimises `sum(deviation_vars)` — the count of changed assignments
 
-## Key Concepts Covered
-
-**Operations Research**
-- Nurse Rostering Problem (NRP) — why it's NP-hard
-- Mixed Integer Programming (MIP), Column Generation, Constraint Programming
-- Hard vs. soft constraints; objective functions for cost, fairness, and safety
-
-**LLM Capabilities & Architecture**
-- Constraint extraction from natural language (zero-shot / few-shot prompting)
-- ReAct (Reasoning + Acting) frameworks and agentic workflows
-- Neuro-symbolic hybrid: LLM → structured model → OR solver (OR-Tools, Gurobi, Z3)
-
-**LLM Limitations** *(covered honestly)*
-- ~65% feasibility rate on scheduling benchmarks (ConstraintBench)
-- Tokenization barriers to arithmetic and temporal reasoning
-- "Lost-in-the-middle" degradation over long horizons
-- Latency and cost trade-offs for real-time deployment
-
-**Case Studies**
-- Apollo Hospitals: AI-driven admin automation targeting 30% attrition reduction
-- Urban ED (85k patients/year): 93% self-scheduled shifts, 85% reduction in scheduling workload
-- Duke Health: 20% reduction in note-taking time, 30% less after-hours clerical work
-
----
-
-## Viewing the Presentation
-
-Open `presentation.html` directly in any modern browser — no server or dependencies required. Navigate with **arrow keys** or **click**.
-
----
-
-## Setup (Python tooling)
-
-Requires Python 3.9.
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt  # if applicable
-python main.py
-```
+The result is a schedule with the fewest possible changes from the original, guaranteed by the solver.
 
 ---
 
 ## Further Reading
 
-- `LLM-SCHEDULING-HEALTHCARE.md` — comprehensive background on OR + LLM integration for clinicians
-- `LIMITATIONS.md` — systematic analysis of where current LLMs fall short in scheduling tasks, and the path toward reliability via neuro-symbolic hybrids
+- `LLM-SCHEDULING-HEALTHCARE.md` — comprehensive background on OR + LLM integration
+- `LIMITATIONS.md` — why LLMs alone are unreliable for scheduling, and how neuro-symbolic hybrids address this
