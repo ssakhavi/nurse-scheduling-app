@@ -697,6 +697,8 @@ if "original_ns" not in st.session_state:
     st.session_state.original_ns = None
 if "reschedule_result" not in st.session_state:
     st.session_state.reschedule_result = None
+if "problem_text" not in st.session_state:
+    st.session_state.problem_text = DEFAULT_PROBLEM
 
 # ── Step 1: Problem description ───────────────────────────────────────────────
 st.header("Step 1 — Describe the Problem")
@@ -704,10 +706,30 @@ st.markdown(
     "Write the scheduling rules exactly as a nurse manager would explain them to a colleague."
 )
 
+input_mode = st.radio(
+    "Input method",
+    ["✏️ Type", "📄 Upload .txt"],
+    horizontal=True,
+    label_visibility="collapsed",
+)
+
+if input_mode == "📄 Upload .txt":
+    uploaded = st.file_uploader(
+        "Upload a .txt file with the problem description",
+        type=["txt"],
+        label_visibility="collapsed",
+    )
+    if uploaded is not None:
+        content = uploaded.read().decode("utf-8")
+        if content != st.session_state.problem_text:
+            st.session_state.problem_text = content
+            st.rerun()
+    st.caption("File loaded — edit below if needed.")
+
 problem_text = st.text_area(
     "Problem description",
-    value=DEFAULT_PROBLEM,
     height=260,
+    key="problem_text",
     label_visibility="collapsed",
 )
 

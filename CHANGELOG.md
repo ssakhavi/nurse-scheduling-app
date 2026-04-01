@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 Versioning follows [Semantic Versioning](https://semver.org): MAJOR.MINOR.PATCH.
 
+## [0.1.1] — 2026-04-01
+
+### Added
+- Step 1 now supports uploading a `.txt` file as an alternative to typing the problem description
+- Radio toggle between "✏️ Type" and "📄 Upload .txt" input modes
+- Uploaded content is pre-populated into the editable text area, allowing further editing before solving
+
 ## [0.1.0] — 2026-04-01
 
 ### Added

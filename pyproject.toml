@@ -1,6 +1,6 @@
 [project]
 name = "nurse-scheduling"
-version = "0.1.0"
+version = "0.1.1"
 description = "Healthcare scheduling demo — Streamlit + OR-Tools + Claude"
 readme = "README.md"
 requires-python = ">=3.9"
